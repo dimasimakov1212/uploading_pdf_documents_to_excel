@@ -1,5 +1,7 @@
 import os
 import shutil
+from tkinter import *
+from tkinter import messagebox
 
 import pandas as pd
 
@@ -23,7 +25,6 @@ start_num = len(data)
 documents_count = 0  # количество документов для обработки
 
 documents = os.listdir(path_pdf)  # список элементов для обработки
-# print(documents)
 
 for document in documents:
     full_document_path = os.path.join(path_pdf, document)
@@ -46,23 +47,28 @@ for document in documents:
     else:
         print(f'Пропущен не файл: {document}')
 
-print(f'Найдено для обработки {documents_count} документов.')
+documents_count_text = f'Найдено для обработки {documents_count} документов'
+print(documents_count_text)
+
+success_documents_text = ''
+error_documents_text = f'Не обработано {documents_count - (len(data) - start_num)} документов'
 
 if documents_count > 0:
-    print(f'Успешно проанализировано {len(data) - start_num} ({int((len(data) - start_num)/documents_count * 100)}%) документов.')
+    success_documents_text = (f'Успешно проанализировано '
+                              f'{len(data) - start_num} ({int((len(data) - start_num)/documents_count * 100)}%) '
+                              f'документов')
+    print(success_documents_text)
 
 if len(data) > 0:
-
     # преобразуем получившийся список в датафрейм
     df_all = pd.DataFrame(data)
     df_all.index += 1  # нумерация с 1
-
 
     # проверка на сумму штрафа
     df_all['Сумма штрафа более 5000'] = df_all['Сумма штрафа'] > 5000
 
 
-    # агрегация по адресам и с количеством штрафов по каждому адресу
+    # агрегация по адресам с количеством штрафов по каждому адресу
     agg_table = df_all.groupby('Адрес').size().reset_index(name='Количество')
     agg_table.index += 1  # нумерация с 1
 
@@ -92,6 +98,36 @@ if len(data) > 0:
 # Чтение данных из Excel файла
 list_of_dicts = reading_existing_file_excel(all_fines_file)
 print('Итоговый файл содержит', len(list_of_dicts), 'записей')
+
+def close_program():
+    """ Закрывает окно программы """
+    if messagebox.askokcancel('Завершение работы программы', 'Хотите выйти?'):
+        tk.destroy()
+
+# окно уведомления о завершении работы программы
+tk = Tk()
+
+tk.title('Загрузка штрафов из постановлений PDF в таблицы Excel')
+tk.protocol("WM_DELETE_WINDOW", close_program)
+tk.resizable(None, None)  # запрет на растягивание окна по горизонтали и вертикали
+tk.wm_attributes("-topmost", 1)  # расположение окна поверх других окон
+tk.iconbitmap("Icon_docs.ico")
+
+# параметры окна
+window_width = 600
+window_height = 200
+
+# создаем окно программы
+canvas = Canvas(tk, width=window_width, height=window_height, highlightthickness=0)
+canvas.pack()
+
+canvas.create_text(window_width / 2, 20, text=documents_count_text, font=('Arial', 11), anchor='n')
+canvas.create_line(50, 50, 550, 50, width=1)
+canvas.create_text(window_width / 2, 70, text=success_documents_text, font=('Arial', 11), anchor='n')
+if documents_count - (len(data) - start_num) > 0:
+    canvas.create_text(window_width / 2, 90, text=error_documents_text, font=('Arial', 11), anchor='n')
+
+tk.mainloop()
 
 
 if __name__ == '__main__':
