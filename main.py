@@ -51,39 +51,43 @@ print(f'Найдено для обработки {documents_count} докуме�
 if documents_count > 0:
     print(f'Успешно проанализировано {len(data) - start_num} ({int((len(data) - start_num)/documents_count * 100)}%) документов.')
 
-# преобразуем получившийся список в датафрейм
-df_all = pd.DataFrame(data)
-df_all.index += 1  # нумерация с 1
+if len(data) > 0:
 
-# проверка на сумму штрафа
-df_all['Сумма штрафа более 5000'] = df_all['Сумма штрафа'] > 5000
+    # преобразуем получившийся список в датафрейм
+    df_all = pd.DataFrame(data)
+    df_all.index += 1  # нумерация с 1
 
-# агрегация по адресам и с количеством штрафов по каждому адресу
-agg_table = df_all.groupby('Адрес').size().reset_index(name='Количество')
-agg_table.index += 1  # нумерация с 1
 
-# переименуем колонки
-agg_table.index.names = ['№']
-agg_table.rename(columns={'Адрес':'Адрес местоположения'}, inplace=True)
+    # проверка на сумму штрафа
+    df_all['Сумма штрафа более 5000'] = df_all['Сумма штрафа'] > 5000
 
-# датафрейм с результатом скрапинга
-df_all.head()
 
-# создаем 3 новых датафрейма
-df_low = df_all.loc[df_all['Сумма штрафа'] < 2500]
-df_mid = df_all.loc[(df_all['Сумма штрафа'] >= 2500) & (df_all['Сумма штрафа'] < 5000)]
-df_high = df_all.loc[df_all['Сумма штрафа'] >= 5000]
+    # агрегация по адресам и с количеством штрафов по каждому адресу
+    agg_table = df_all.groupby('Адрес').size().reset_index(name='Количество')
+    agg_table.index += 1  # нумерация с 1
 
-df_low.head()
-df_mid.head()
-df_high.head()
+    # переименуем колонки
+    agg_table.index.names = ['№']
+    agg_table.rename(columns={'Адрес':'Адрес местоположения'}, inplace=True)
 
-# экспортировать как таблицы Excel
-df_all.to_excel(all_fines_file)
-df_low.to_excel(low_fines_file)
-df_mid.to_excel(middle_fines_file)
-df_high.to_excel(high_fines_file)
-agg_table.to_excel(addresses_fines_file)
+    # датафрейм с результатом скрапинга
+    df_all.head()
+
+    # создаем 3 новых датафрейма
+    df_low = df_all.loc[df_all['Сумма штрафа'] < 2500]
+    df_mid = df_all.loc[(df_all['Сумма штрафа'] >= 2500) & (df_all['Сумма штрафа'] < 5000)]
+    df_high = df_all.loc[df_all['Сумма штрафа'] >= 5000]
+
+    df_low.head()
+    df_mid.head()
+    df_high.head()
+
+    # экспортировать как таблицы Excel
+    df_all.to_excel(all_fines_file)
+    df_low.to_excel(low_fines_file)
+    df_mid.to_excel(middle_fines_file)
+    df_high.to_excel(high_fines_file)
+    agg_table.to_excel(addresses_fines_file)
 
 # Чтение данных из Excel файла
 list_of_dicts = reading_existing_file_excel(all_fines_file)
